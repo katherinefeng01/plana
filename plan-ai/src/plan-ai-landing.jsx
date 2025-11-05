@@ -11,19 +11,30 @@ export default function PlanaLanding() {
   // Health data form state
   const [healthData, setHealthData] = useState({
     age: '',
+    race: '',
+    ethnicity: '',
     weight: '',
     height: '',
+    bloodType: '',
     bloodPressure: 'normal',
     smoker: 'no',
     migraines: 'no',
     bloodClots: 'no',
     diabetes: 'no',
+    birthControlsTried: [],
+    currentBirthControl: '',
+    sideEffects: [],
+    activityLevel: '',
     concerns: []
   });
   
   const [insuranceFile, setInsuranceFile] = useState(null);
   const [idFile, setIdFile] = useState(null);
+  const [hasInsurance, setHasInsurance] = useState(true);
   const [showResults, setShowResults] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [connectedWearables, setConnectedWearables] = useState([]);
+  const [expandedRecommendation, setExpandedRecommendation] = useState(null);
 
   const concerns = [
     'Acne management',
@@ -34,12 +45,37 @@ export default function PlanaLanding() {
     'Long-term protection'
   ];
 
+  const birthControlOptions = [
+    'Combination Pill',
+    'Progestin-only Pill',
+    'Patch',
+    'Ring',
+    'Hormonal IUD',
+    'Copper IUD',
+    'Implant',
+    'Shot (Depo-Provera)',
+    'Condoms',
+    'None'
+  ];
+
+  const commonSideEffects = [
+    'Nausea',
+    'Headaches',
+    'Mood changes',
+    'Weight gain',
+    'Breast tenderness',
+    'Irregular bleeding',
+    'Acne',
+    'Decreased libido'
+  ];
+
   const recommendations = [
     {
       name: 'Combination Pill (Yaz)',
       type: 'Oral Contraceptive',
       effectiveness: '99% with perfect use',
       cost: '$15-25/month',
+      matchScore: 94,
       whyItFits: [
         'Perfect for hormone balance and acne management based on your concerns',
         'No contraindications with your health profile',
@@ -47,15 +83,36 @@ export default function PlanaLanding() {
         'Helps with period regulation you mentioned'
       ],
       sideEffects: 'Mild nausea initially, breast tenderness',
-      clinic: 'Planned Parenthood - Downtown Center',
-      address: '123 Main St, Your City, ST 12345',
-      distance: '2.3 miles away'
+      clinic: 'Women\'s Health Clinic',
+      address: '456 Oak Ave, Your City, ST 12345',
+      distance: '3.7 miles away',
+      aiAnalysis: {
+        featureImportance: [
+          { feature: 'Acne management concern', impact: 95, positive: true },
+          { feature: 'Hormone balance goal', impact: 90, positive: true },
+          { feature: 'Period regulation need', impact: 88, positive: true },
+          { feature: 'Normal blood pressure', impact: 85, positive: true },
+          { feature: 'Non-smoker status', impact: 82, positive: true },
+          { feature: 'No migraine history', impact: 80, positive: true },
+          { feature: 'Age group compatibility', impact: 75, positive: true }
+        ],
+        compatibilityFactors: {
+          healthProfile: 96,
+          lifestyle: 92,
+          concerns: 94,
+          sideEffectTolerance: 90
+        },
+        riskFactors: [
+          { factor: 'No significant risk factors detected', level: 'low' }
+        ]
+      }
     },
     {
       name: 'Hormonal IUD (Mirena)',
       type: 'Intrauterine Device',
       effectiveness: '99.8% effective',
       cost: '$0-1,300 (often covered by insurance)',
+      matchScore: 91,
       whyItFits: [
         'Long-term protection matches your convenience preference',
         'Excellent for cramp relief - periods often become lighter or stop',
@@ -65,13 +122,34 @@ export default function PlanaLanding() {
       sideEffects: 'Irregular bleeding first 3-6 months, insertion discomfort',
       clinic: 'Women\'s Health Clinic',
       address: '456 Oak Ave, Your City, ST 12345',
-      distance: '3.7 miles away'
+      distance: '3.7 miles away',
+      aiAnalysis: {
+        featureImportance: [
+          { feature: 'Long-term protection desire', impact: 98, positive: true },
+          { feature: 'Convenience priority', impact: 95, positive: true },
+          { feature: 'Cramp relief need', impact: 92, positive: true },
+          { feature: 'Active lifestyle compatibility', impact: 88, positive: true },
+          { feature: 'Low maintenance preference', impact: 85, positive: true },
+          { feature: 'Hormone balance goal', impact: 80, positive: true }
+        ],
+        compatibilityFactors: {
+          healthProfile: 94,
+          lifestyle: 95,
+          concerns: 89,
+          sideEffectTolerance: 85
+        },
+        riskFactors: [
+          { factor: 'Initial adjustment period (3-6 months)', level: 'low' },
+          { factor: 'Insertion discomfort', level: 'low' }
+        ]
+      }
     },
     {
       name: 'NuvaRing',
       type: 'Vaginal Ring',
       effectiveness: '99% with perfect use',
       cost: '$0-200/month (usually covered)',
+      matchScore: 87,
       whyItFits: [
         'Monthly change aligns with your preference for low maintenance',
         'Steady hormone levels help with period regulation',
@@ -79,9 +157,29 @@ export default function PlanaLanding() {
         'No daily pill to remember'
       ],
       sideEffects: 'Vaginal discharge, irritation possible',
-      clinic: 'City Medical Center - OB/GYN',
-      address: '789 Elm Street, Your City, ST 12345',
-      distance: '1.5 miles away'
+      clinic: 'Women\'s Health Clinic',
+      address: '456 Oak Ave, Your City, ST 12345',
+      distance: '3.7 miles away',
+      aiAnalysis: {
+        featureImportance: [
+          { feature: 'Period regulation goal', impact: 90, positive: true },
+          { feature: 'Hormone balance need', impact: 88, positive: true },
+          { feature: 'Low maintenance preference', impact: 85, positive: true },
+          { feature: 'Normal blood pressure', impact: 82, positive: true },
+          { feature: 'Non-smoker status', impact: 80, positive: true },
+          { feature: 'Cramp relief need', impact: 78, positive: true }
+        ],
+        compatibilityFactors: {
+          healthProfile: 92,
+          lifestyle: 88,
+          concerns: 87,
+          sideEffectTolerance: 82
+        },
+        riskFactors: [
+          { factor: 'Potential vaginal irritation', level: 'low' },
+          { factor: 'Requires comfort with insertion', level: 'medium' }
+        ]
+      }
     }
   ];
 
@@ -105,6 +203,24 @@ export default function PlanaLanding() {
     }));
   };
 
+  const handleBirthControlToggle = (bc) => {
+    setHealthData(prev => ({
+      ...prev,
+      birthControlsTried: prev.birthControlsTried.includes(bc)
+        ? prev.birthControlsTried.filter(b => b !== bc)
+        : [...prev.birthControlsTried, bc]
+    }));
+  };
+
+  const handleSideEffectToggle = (effect) => {
+    setHealthData(prev => ({
+      ...prev,
+      sideEffects: prev.sideEffects.includes(effect)
+        ? prev.sideEffects.filter(e => e !== effect)
+        : [...prev.sideEffects, effect]
+    }));
+  };
+
   const handleFileUpload = (type, e) => {
     const file = e.target.files[0];
     if (file) {
@@ -113,26 +229,75 @@ export default function PlanaLanding() {
     }
   };
 
-  const canProceedStep1 = healthData.age && healthData.weight && healthData.height && healthData.concerns.length > 0;
-  const canProceedStep2 = insuranceFile && idFile;
+  const toggleWearable = (wearableName) => {
+    setConnectedWearables(prev => 
+      prev.includes(wearableName)
+        ? prev.filter(w => w !== wearableName)
+        : [...prev, wearableName]
+    );
+  };
+
+  const canProceedStep1 = healthData.age && healthData.race && healthData.ethnicity && 
+    healthData.weight && healthData.height && healthData.bloodType && 
+    healthData.activityLevel && healthData.concerns.length > 0;
+  const canProceedStep2 = idFile && (hasInsurance ? insuranceFile : true);
+  const canProceedStep3 = true; // Wearables are optional
+
+  const wearables = [
+    {
+      name: 'Whoop',
+      description: 'Track recovery, strain, and sleep data',
+      connected: false
+    },
+    {
+      name: 'Oura Ring',
+      description: 'Monitor sleep, activity, and readiness',
+      connected: false
+    },
+    {
+      name: 'Apple Watch',
+      description: 'Sync health and activity metrics',
+      connected: false
+    },
+    {
+      name: 'Fitbit',
+      description: 'Connect fitness and health data',
+      connected: false
+    }
+  ];
 
   const handleGetRecommendations = () => {
-    setShowResults(true);
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setShowResults(true);
+    }, 3000);
   };
 
   const resetDemo = () => {
     setShowDemo(false);
     setDemoStep(1);
     setShowResults(false);
+    setIsLoading(false);
+    setHasInsurance(true);
+    setConnectedWearables([]);
+    setExpandedRecommendation(null);
     setHealthData({
       age: '',
+      race: '',
+      ethnicity: '',
       weight: '',
       height: '',
+      bloodType: '',
       bloodPressure: 'normal',
       smoker: 'no',
       migraines: 'no',
       bloodClots: 'no',
       diabetes: 'no',
+      birthControlsTried: [],
+      currentBirthControl: '',
+      sideEffects: [],
+      activityLevel: '',
       concerns: []
     });
     setInsuranceFile(null);
@@ -150,20 +315,20 @@ export default function PlanaLanding() {
           <X className="w-6 h-6 text-gray-600" />
         </button>
 
-        {!showResults ? (
+        {!showResults && !isLoading ? (
           <div className="max-w-4xl mx-auto px-6 py-12">
             {/* Progress bar */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-normal text-purple-600">Step {demoStep} of 2</span>
+                <span className="text-sm font-normal text-purple-600">Step {demoStep} of 3</span>
                 <span className="text-sm font-light text-gray-500">
-                  {demoStep === 1 ? 'Health Profile' : 'Verification'}
+                  {demoStep === 1 ? 'Health Profile' : demoStep === 2 ? 'Verification' : 'Wearables (Optional)'}
                 </span>
               </div>
               <div className="w-full bg-purple-200 rounded-full h-2">
                 <div
                   className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${(demoStep / 2) * 100}%` }}
+                  style={{ width: `${(demoStep / 3) * 100}%` }}
                 ></div>
               </div>
             </div>
@@ -178,7 +343,7 @@ export default function PlanaLanding() {
                   {/* Basic Info */}
                   <div className="grid md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-normal text-gray-700 mb-2">Age</label>
+                      <label className="block text-sm font-normal text-gray-700 mb-2">Age *</label>
                       <input
                         type="number"
                         value={healthData.age}
@@ -188,7 +353,7 @@ export default function PlanaLanding() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-normal text-gray-700 mb-2">Weight (lbs)</label>
+                      <label className="block text-sm font-normal text-gray-700 mb-2">Weight (lbs) *</label>
                       <input
                         type="number"
                         value={healthData.weight}
@@ -198,7 +363,7 @@ export default function PlanaLanding() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-normal text-gray-700 mb-2">Height (inches)</label>
+                      <label className="block text-sm font-normal text-gray-700 mb-2">Height (inches) *</label>
                       <input
                         type="number"
                         value={healthData.height}
@@ -207,6 +372,76 @@ export default function PlanaLanding() {
                         placeholder="65"
                       />
                     </div>
+                  </div>
+
+                  {/* Race, Ethnicity, Blood Type */}
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-normal text-gray-700 mb-2">Race *</label>
+                      <select
+                        value={healthData.race}
+                        onChange={(e) => setHealthData({...healthData, race: e.target.value})}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none"
+                      >
+                        <option value="">Select...</option>
+                        <option value="american-indian">American Indian or Alaska Native</option>
+                        <option value="asian">Asian</option>
+                        <option value="black">Black or African American</option>
+                        <option value="pacific-islander">Native Hawaiian or Pacific Islander</option>
+                        <option value="white">White</option>
+                        <option value="other">Other</option>
+                        <option value="prefer-not">Prefer not to say</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-normal text-gray-700 mb-2">Ethnicity *</label>
+                      <select
+                        value={healthData.ethnicity}
+                        onChange={(e) => setHealthData({...healthData, ethnicity: e.target.value})}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none"
+                      >
+                        <option value="">Select...</option>
+                        <option value="hispanic">Hispanic or Latino</option>
+                        <option value="non-hispanic">Not Hispanic or Latino</option>
+                        <option value="prefer-not">Prefer not to say</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-normal text-gray-700 mb-2">Blood Type *</label>
+                      <select
+                        value={healthData.bloodType}
+                        onChange={(e) => setHealthData({...healthData, bloodType: e.target.value})}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none"
+                      >
+                        <option value="">Select...</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                        <option value="unknown">Don't know</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Activity Level */}
+                  <div>
+                    <label className="block text-sm font-normal text-gray-700 mb-2">Activity Level *</label>
+                    <select
+                      value={healthData.activityLevel}
+                      onChange={(e) => setHealthData({...healthData, activityLevel: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none"
+                    >
+                      <option value="">Select...</option>
+                      <option value="sedentary">Sedentary (little or no exercise)</option>
+                      <option value="light">Lightly active (1-3 days/week)</option>
+                      <option value="moderate">Moderately active (3-5 days/week)</option>
+                      <option value="very">Very active (6-7 days/week)</option>
+                      <option value="extra">Extremely active (physical job or training)</option>
+                    </select>
                   </div>
 
                   {/* Health Conditions */}
@@ -255,6 +490,77 @@ export default function PlanaLanding() {
                         <option value="no">No</option>
                         <option value="yes">Yes</option>
                       </select>
+                    </div>
+                  </div>
+
+                  {/* Birth Control History */}
+                  <div>
+                    <label className="block text-sm font-normal text-gray-700 mb-3">
+                      Birth controls you've tried (Select all that apply)
+                    </label>
+                    <div className="grid md:grid-cols-2 gap-3">
+                      {birthControlOptions.map((bc) => (
+                        <button
+                          key={bc}
+                          onClick={() => handleBirthControlToggle(bc)}
+                          className={`px-4 py-3 rounded-xl border-2 transition-all text-left ${
+                            healthData.birthControlsTried.includes(bc)
+                              ? 'border-purple-500 bg-purple-50 text-purple-900'
+                              : 'border-purple-200 bg-white text-gray-700 hover:border-purple-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-light">{bc}</span>
+                            {healthData.birthControlsTried.includes(bc) && (
+                              <CheckCircle className="w-5 h-5 text-purple-600" />
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Current Birth Control */}
+                  <div>
+                    <label className="block text-sm font-normal text-gray-700 mb-2">
+                      Current birth control (if any)
+                    </label>
+                    <select
+                      value={healthData.currentBirthControl}
+                      onChange={(e) => setHealthData({...healthData, currentBirthControl: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none"
+                    >
+                      <option value="">None / Not currently using</option>
+                      {birthControlOptions.filter(bc => bc !== 'None').map((bc) => (
+                        <option key={bc} value={bc}>{bc}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Side Effects Experienced */}
+                  <div>
+                    <label className="block text-sm font-normal text-gray-700 mb-3">
+                      Side effects you've experienced (Select all that apply)
+                    </label>
+                    <div className="grid md:grid-cols-2 gap-3">
+                      {commonSideEffects.map((effect) => (
+                        <button
+                          key={effect}
+                          onClick={() => handleSideEffectToggle(effect)}
+                          className={`px-4 py-3 rounded-xl border-2 transition-all text-left ${
+                            healthData.sideEffects.includes(effect)
+                              ? 'border-orange-500 bg-orange-50 text-orange-900'
+                              : 'border-purple-200 bg-white text-gray-700 hover:border-purple-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-light">{effect}</span>
+                            {healthData.sideEffects.includes(effect) && (
+                              <CheckCircle className="w-5 h-5 text-orange-600" />
+                            )}
+                          </div>
+                        </button>
+                      ))}
                     </div>
                   </div>
 
@@ -316,35 +622,72 @@ export default function PlanaLanding() {
                 <p className="text-gray-600 font-light mb-8">We need these to process your prescription</p>
 
                 <div className="space-y-6">
-                  {/* Insurance Upload */}
-                  <div>
-                    <label className="block text-sm font-normal text-gray-700 mb-3">
-                      Insurance Card (Front & Back)
-                    </label>
-                    <div className="border-2 border-dashed border-purple-300 rounded-xl p-8 text-center hover:border-purple-500 transition-all">
-                      <input
-                        type="file"
-                        id="insurance"
-                        onChange={(e) => handleFileUpload('insurance', e)}
-                        className="hidden"
-                        accept="image/*"
-                      />
-                      <label htmlFor="insurance" className="cursor-pointer">
-                        {insuranceFile ? (
-                          <div className="flex items-center justify-center space-x-3 text-green-600">
-                            <CheckCircle className="w-6 h-6" />
-                            <span className="font-normal">{insuranceFile.name}</span>
-                          </div>
-                        ) : (
-                          <div>
-                            <Upload className="w-12 h-12 text-purple-400 mx-auto mb-3" />
-                            <p className="text-gray-600 font-light">Click to upload or drag and drop</p>
-                            <p className="text-sm text-gray-400 mt-1">PNG, JPG up to 10MB</p>
-                          </div>
-                        )}
-                      </label>
+                  {/* Insurance Toggle */}
+                  <div className="flex items-center justify-between p-4 bg-purple-50 rounded-xl">
+                    <div>
+                      <p className="font-normal text-gray-900">Do you have insurance?</p>
+                      <p className="text-sm text-gray-600 font-light mt-1">
+                        We'll help you find the most affordable options
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <button
+                        onClick={() => {
+                          setHasInsurance(false);
+                          setInsuranceFile(null);
+                        }}
+                        className={`px-4 py-2 rounded-lg font-normal transition-all ${
+                          !hasInsurance
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-white text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        No
+                      </button>
+                      <button
+                        onClick={() => setHasInsurance(true)}
+                        className={`px-4 py-2 rounded-lg font-normal transition-all ${
+                          hasInsurance
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-white text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        Yes
+                      </button>
                     </div>
                   </div>
+
+                  {/* Insurance Upload - Conditional */}
+                  {hasInsurance && (
+                    <div>
+                      <label className="block text-sm font-normal text-gray-700 mb-3">
+                        Insurance Card (Front & Back)
+                      </label>
+                      <div className="border-2 border-dashed border-purple-300 rounded-xl p-8 text-center hover:border-purple-500 transition-all">
+                        <input
+                          type="file"
+                          id="insurance"
+                          onChange={(e) => handleFileUpload('insurance', e)}
+                          className="hidden"
+                          accept="image/*"
+                        />
+                        <label htmlFor="insurance" className="cursor-pointer">
+                          {insuranceFile ? (
+                            <div className="flex items-center justify-center space-x-3 text-green-600">
+                              <CheckCircle className="w-6 h-6" />
+                              <span className="font-normal">{insuranceFile.name}</span>
+                            </div>
+                          ) : (
+                            <div>
+                              <Upload className="w-12 h-12 text-purple-400 mx-auto mb-3" />
+                              <p className="text-gray-600 font-light">Click to upload or drag and drop</p>
+                              <p className="text-sm text-gray-400 mt-1">PNG, JPG up to 10MB</p>
+                            </div>
+                          )}
+                        </label>
+                      </div>
+                    </div>
+                  )}
 
                   {/* ID Upload */}
                   <div>
@@ -388,7 +731,7 @@ export default function PlanaLanding() {
                 </div>
 
                 <button
-                  onClick={handleGetRecommendations}
+                  onClick={() => setDemoStep(3)}
                   disabled={!canProceedStep2}
                   className={`mt-8 w-full px-8 py-4 rounded-xl font-normal flex items-center justify-center space-x-2 transition-all ${
                     canProceedStep2
@@ -396,11 +739,122 @@ export default function PlanaLanding() {
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  <span>Get My Recommendations</span>
-                  <Sparkles className="w-5 h-5" />
+                  <span>Continue</span>
+                  <ChevronRight className="w-5 h-5" />
                 </button>
               </div>
             )}
+
+            {/* Step 3: Connect Wearables */}
+            {demoStep === 3 && (
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl">
+                <button
+                  onClick={() => setDemoStep(2)}
+                  className="mb-6 flex items-center space-x-2 text-purple-600 hover:text-purple-700"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                  <span className="font-light">Back</span>
+                </button>
+
+                <h2 className="text-3xl font-light text-gray-900 mb-2">Connect your wearables</h2>
+                <p className="text-gray-600 font-light mb-2">
+                  Sync your health data for more personalized recommendations
+                </p>
+                <p className="text-sm text-purple-600 font-light mb-8">Optional - Skip if you prefer</p>
+
+                <div className="space-y-4 mb-8">
+                  {wearables.map((wearable) => {
+                    const isConnected = connectedWearables.includes(wearable.name);
+                    return (
+                      <div
+                        key={wearable.name}
+                        className={`border-2 rounded-xl p-6 transition-all cursor-pointer ${
+                          isConnected
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-purple-200 bg-white hover:border-purple-300'
+                        }`}
+                        onClick={() => toggleWearable(wearable.name)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="text-4xl">{wearable.icon}</div>
+                            <div>
+                              <h3 className="font-normal text-gray-900 text-lg">{wearable.name}</h3>
+                              <p className="text-sm text-gray-600 font-light">{wearable.description}</p>
+                            </div>
+                          </div>
+                          {isConnected ? (
+                            <div className="flex items-center space-x-2 text-green-600">
+                              <CheckCircle className="w-6 h-6" />
+                              <span className="font-normal">Connected</span>
+                            </div>
+                          ) : (
+                            <button className="px-4 py-2 bg-purple-600 text-white font-normal rounded-lg hover:bg-purple-700 transition-all">
+                              Connect
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start space-x-3 mb-6">
+                  <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-normal text-blue-900">Why connect wearables?</p>
+                    <p className="text-sm text-blue-700 font-light mt-1">
+                      Data like sleep patterns, heart rate variability, and activity levels help us understand how different birth control options might affect your body.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleGetRecommendations}
+                    className="flex-1 px-8 py-4 bg-white border-2 border-purple-200 text-purple-600 font-normal rounded-xl hover:border-purple-300 transition-all"
+                  >
+                    Skip for now
+                  </button>
+                  <button
+                    onClick={handleGetRecommendations}
+                    className="flex-1 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-normal rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all flex items-center justify-center space-x-2"
+                  >
+                    <span>Get My Recommendations</span>
+                    <Sparkles className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : isLoading ? (
+          /* Loading Screen */
+          <div className="max-w-4xl mx-auto px-6 py-12 flex items-center justify-center min-h-[60vh]">
+            <div className="text-center">
+              <div className="relative w-32 h-32 mx-auto mb-8">
+                <div className="absolute inset-0 border-8 border-purple-200 rounded-full"></div>
+                <div className="absolute inset-0 border-8 border-purple-600 rounded-full border-t-transparent animate-spin"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Sparkles className="w-12 h-12 text-purple-600 animate-pulse" />
+                </div>
+              </div>
+              <h3 className="text-2xl font-light text-gray-900 mb-3">Analyzing your profile...</h3>
+              <p className="text-gray-600 font-light">Our AI is matching you with the best options</p>
+              <div className="mt-8 space-y-3">
+                <div className="flex items-center justify-center space-x-3 text-gray-600">
+                  <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce"></div>
+                  <span className="text-sm font-light">Reviewing your health data</span>
+                </div>
+                <div className="flex items-center justify-center space-x-3 text-gray-600" style={{animationDelay: '0.2s'}}>
+                  <div className="w-2 h-2 bg-pink-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  <span className="text-sm font-light">Comparing birth control options</span>
+                </div>
+                <div className="flex items-center justify-center space-x-3 text-gray-600" style={{animationDelay: '0.4s'}}>
+                  <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
+                  <span className="text-sm font-light">Finding nearby clinics</span>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           /* Results Page */
@@ -492,6 +946,145 @@ export default function PlanaLanding() {
                       </button>
                     </div>
                   </div>
+
+                  {/* AI Analysis Section */}
+                  <div className="border-t border-purple-200 mt-6 pt-6">
+                    <button
+                      onClick={() => setExpandedRecommendation(expandedRecommendation === index ? null : index)}
+                      className="w-full flex items-center justify-between text-left hover:bg-purple-50 rounded-lg p-3 transition-all"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Sparkles className="w-5 h-5 text-purple-600" />
+                        <div>
+                          <h4 className="text-sm font-normal text-gray-900">How AI matched you</h4>
+                          <p className="text-xs text-gray-500 font-light">See the data-driven evidence</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="px-3 py-1 bg-green-100 text-green-700 text-sm font-normal rounded-full">
+                          {rec.matchScore}% Match
+                        </div>
+                        <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform ${expandedRecommendation === index ? 'rotate-90' : ''}`} />
+                      </div>
+                    </button>
+
+                    {expandedRecommendation === index && (
+                      <div className="mt-4 space-y-6 animate-in">
+                        {/* Compatibility Breakdown */}
+                        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6">
+                          <h5 className="text-sm font-normal text-gray-900 mb-4 flex items-center space-x-2">
+                            <Shield className="w-4 h-4 text-purple-600" />
+                            <span>Compatibility Breakdown</span>
+                          </h5>
+                          <div className="space-y-3">
+                            {Object.entries(rec.aiAnalysis.compatibilityFactors).map(([category, score]) => (
+                              <div key={category}>
+                                <div className="flex justify-between items-center mb-1">
+                                  <span className="text-sm font-light text-gray-700 capitalize">
+                                    {category.replace(/([A-Z])/g, ' $1').trim()}
+                                  </span>
+                                  <span className="text-sm font-normal text-purple-600">{score}%</span>
+                                </div>
+                                <div className="w-full bg-purple-200 rounded-full h-2">
+                                  <div
+                                    className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-1000"
+                                    style={{ width: `${score}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Feature Importance */}
+                        <div>
+                          <h5 className="text-sm font-normal text-gray-900 mb-4 flex items-center space-x-2">
+                            <Fingerprint className="w-4 h-4 text-purple-600" />
+                            <span>Key Factors in Your Match</span>
+                          </h5>
+                          <div className="space-y-2">
+                            {rec.aiAnalysis.featureImportance.map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center space-x-3 bg-white rounded-lg p-3 border border-purple-100"
+                              >
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-sm font-light text-gray-700">{item.feature}</span>
+                                    <span className="text-xs font-normal text-purple-600">{item.impact}%</span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div
+                                      className={`h-1.5 rounded-full ${
+                                        item.positive ? 'bg-green-500' : 'bg-orange-500'
+                                      }`}
+                                      style={{ width: `${item.impact}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                                {item.positive && (
+                                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Risk Assessment */}
+                        <div>
+                          <h5 className="text-sm font-normal text-gray-900 mb-3 flex items-center space-x-2">
+                            <Info className="w-4 h-4 text-blue-600" />
+                            <span>Risk Assessment</span>
+                          </h5>
+                          <div className="space-y-2">
+                            {rec.aiAnalysis.riskFactors.map((risk, idx) => (
+                              <div
+                                key={idx}
+                                className={`flex items-start space-x-3 rounded-lg p-3 ${
+                                  risk.level === 'low'
+                                    ? 'bg-green-50 border border-green-200'
+                                    : risk.level === 'medium'
+                                    ? 'bg-yellow-50 border border-yellow-200'
+                                    : 'bg-red-50 border border-red-200'
+                                }`}
+                              >
+                                <div
+                                  className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                                    risk.level === 'low'
+                                      ? 'bg-green-500'
+                                      : risk.level === 'medium'
+                                      ? 'bg-yellow-500'
+                                      : 'bg-red-500'
+                                  }`}
+                                ></div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-light text-gray-700">{risk.factor}</p>
+                                  <p className="text-xs text-gray-500 font-light mt-0.5 capitalize">
+                                    {risk.level} risk
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* AI Confidence Note */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <div className="flex items-start space-x-3">
+                            <Sparkles className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-normal text-blue-900">AI Confidence Level: High</p>
+                              <p className="text-xs text-blue-700 font-light mt-1">
+                                This recommendation is based on analysis of your complete health profile, lifestyle factors, 
+                                and comparison with clinical outcomes from similar user profiles. Always consult with a 
+                                healthcare provider before making decisions.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -524,7 +1117,7 @@ export default function PlanaLanding() {
         <div className="flex items-center space-x-2">
           <div className="w-7 h-7 text-purple-600 fill-purple-600" />
           <span className="text-2xl font-light tracking-wide bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            plana
+            PlanAi
           </span>
         </div>
         <div className="flex items-center space-x-4">
@@ -552,20 +1145,22 @@ export default function PlanaLanding() {
           {/* Main headline */}
           <h1 className="text-6xl md:text-6xl font-extralight mb-6 leading-tight tracking-tight">
             <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">
-              Your body. 
+              Find the right birth control.
             </span>
             <br />
-            <span className="text-gray-900">Your choice.</span>
+            <span className="text-gray-900">Without the trial and error.</span>
             <br />
-            <span className="bg-gradient-to-r from-pink-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+            {/* <span className="bg-gradient-to-r from-pink-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
               AI-powered.
-            </span>
+            </span> */}
           </h1>
 
           <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed font-light">
-            We match your unique health data with the most suitable birth control options. 
-            Science-backed recommendations, personalized for you.
+            We personalize your birth control based on your health and lifestyle.
           </p>
+          {/* <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed font-light">
+            Science-backed recommendations, personalized for you.
+          </p> */}
 
           {/* Waitlist Form */}
           <div className="max-w-md mx-auto mb-16">
@@ -636,7 +1231,7 @@ export default function PlanaLanding() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-purple-200/50 bg-white/30 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-8 text-center text-gray-600">
-          <p className="mb-2 font-light">© 2025 planai. Empowering informed choices.</p>
+          <p className="mb-2 font-light">© 2025 PlanAi. Empowering informed choices.</p>
           <div className="flex justify-center space-x-6 text-sm font-light">
             <a href="#" className="hover:text-purple-600 transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-purple-600 transition-colors">Terms of Service</a>
